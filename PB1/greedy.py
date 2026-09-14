@@ -1,8 +1,20 @@
+import random
+
+
+def Sort_vid(N_vid,Requests):
+    N_request_per_video=[0]*N_vid
+    for request in Requests:
+        vid_id,endpoint_id,num_requests=request
+        N_request_per_video[vid_id]+=num_requests
+    return sorted(range(N_vid), key=lambda x: N_request_per_video[x], reverse=True)
+    
+
 def greedy(N_vid,N_endpoint,N_requests,N_caches,caches_capa,VideoSizes,EndpointData,Requests):
+    Sorted_requests=sorted(Requests,key=lambda x: x[2],reverse=True)
     res=[[] for _ in range(N_caches)]
     cap_per_cache=[caches_capa]*N_caches
     for request_id in range(N_requests):
-        vid_id,endpoint_id,num_requests=Requests[request_id]
+        vid_id,endpoint_id,num_requests=Sorted_requests[request_id]
         latency,linked_caches=EndpointData[endpoint_id]
         fastest_latency=latency
         fastest_cache=None
@@ -12,14 +24,47 @@ def greedy(N_vid,N_endpoint,N_requests,N_caches,caches_capa,VideoSizes,EndpointD
             if cache_latency<fastest_latency and cap_per_cache[cacheid]>=VideoSizes[vid_id]:
                 fastest_latency=cache_latency
                 fastest_cache=cacheid
-        if fastest_cache!=None:
+        if fastest_cache!=None and vid_id not in res[fastest_cache]:
             res[fastest_cache].append(vid_id)
             cap_per_cache[fastest_cache]-=VideoSizes[vid_id]
     return res
 
-def local_search(N_vid,N_endpoint,N_requests,N_caches,caches_capa,VideoSizes,EndpointData,Requests):
-    res=greedy(N_vid,N_endpoint,N_requests,N_caches,caches_capa,VideoSizes,EndpointData,Requests)
+def get_neighbors(N,M,caches, N_vid, N_caches,Requests):
+    neighbors=[]
+    Bigger_vid=Sort_vid(N_vid,Requests)
+    Bigger_vid=Bigger_vid[:N]
+    for vid_id in Bigger_vid:
+        for cache_id in random.sample(range(N_caches), M):
+            new_caches= caches.copy()
+            if vid_id not in caches[cache_id]  :
+              new_caches[cache_id].append(vid_id) #add a video to a cache
+              neighbors.append(new_caches)
+            else:
+              new_caches[cache_id].remove(vid_id) #remove a video from a cache
+              neighbors.append(new_caches)
     
+    return neighbors
+
+def tabu_search(N_iter,N_forbid_step,N,M,N_vid,N_endpoint,N_requests,N_caches,caches_capa,VideoSizes,EndpointData,Requests):
+    res=greedy(N_vid,N_endpoint,N_requests,N_caches,caches_capa,VideoSizes,EndpointData,Requests)
+    forbiden_moves=[None]*N_forbid_step
+    for i in range  (N_iter):
+        print(f"Iteration {i+1}/{N_iter}")
+        neighbors= get_neighbors(N,M,res,N_vid,N_caches,Requests)
+        print(f"Number of neighbors: {len(neighbors)}")
+
+        best_neighbor=None
+        best_cost=float('inf')
+        for neighbor in neighbors:
+            cost=compute_cost(neighbor,EndpointData,Requests)
+            if cost<best_cost and neighbor not in forbiden_moves:
+                best_cost=cost
+                best_neighbor=neighbor
+        if best_neighbor!=None:
+            res=best_neighbor
+            forbiden_moves[i%N_forbid_step]=best_neighbor
+    return res
+
 
 
 
@@ -84,7 +129,7 @@ def main(args):
     N_vid, N_endpoint, N_request, N_cache, cache_size, video_sizes, endpoints, requests = read_input_file(input_file)
     caches = [[] for _ in range(N_cache)]  # la liste des videos stockÃ©s dans chaque cache
 
-    caches=greedy(N_vid, N_endpoint, N_request, N_cache, cache_size, video_sizes, endpoints, requests)
+    caches=tabu_search(1, 7, 2,3, N_vid, N_endpoint, N_request, N_cache, cache_size, video_sizes, endpoints, requests)
 
     print("Caches content:")
     for i, cache in enumerate(caches):
@@ -101,6 +146,18 @@ def main(args):
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
-        main(["instances/test.in"])  # Default input file for testing
+        main(["instances/kittens.in"])  # Default input file for testing
     else:
         main(sys.argv[1:])
+
+
+
+
+
+        
+
+
+
+
+
+    
