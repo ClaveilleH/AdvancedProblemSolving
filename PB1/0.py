@@ -22,7 +22,7 @@ def compute_cost(cache, endpoints, requests):
 
 
 
-def brute(N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, video_sizes, endpoints, requests):
+def greedy_algorithm(N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, video_sizes, endpoints, requests):
     cost_min = compute_cost(caches, endpoints, requests)
     for video_id in range(N_vid):
         video_size = video_sizes[video_id]
@@ -45,6 +45,8 @@ def local_search(N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, vi
     """
     On regarde tout les voisins d'une solution, on prend le meilleur voisin et on recommence jusqu'à ce qu'on ne puisse plus améliorer la solution.
     """
+    if interation == 0:
+        return caches, caches_sizes
     global cpt
     cpt += 1
     base_cost = compute_cost(caches, endpoints, requests)
@@ -71,7 +73,7 @@ def local_search(N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, vi
 
     if best_voisin_cost < base_cost:
         # print(f"Found a better neighbor with cost {best_voisin_cost}")
-        return local_search(N_vid, N_endpoint, N_request, N_cache, best_voisin[0], best_voisin[1], video_sizes, endpoints, requests, interation=interation-1)
+        return local_search(N_vid, N_endpoint, N_request, N_cache, best_voisin[0], best_voisin[1], video_sizes, endpoints, requests)
     
     return best_voisin
 
@@ -120,10 +122,10 @@ def main(args):
     base = N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, video_sizes, endpoints, requests
     # on deepcopy la base pour ne pas modifier les données originales lors de l'algorithme glouton
 
-    # base = copy.deepcopy(base)
+    base = copy.deepcopy(base)
 
     # =================================================
-    brute(N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, video_sizes, endpoints, requests)
+    greedy_algorithm(N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, video_sizes, endpoints, requests)
 
     print("Caches content:")
     for i, cache in enumerate(caches):
@@ -132,6 +134,20 @@ def main(args):
     print("Cost computation:")
     greedyResult = compute_cost(caches, endpoints, requests)
     print(f"Total cost after greedy algorithm: {greedyResult}")
+
+    # =================================================
+    N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, video_sizes, endpoints, requests = base
+
+    caches, caches_sizes = local_search(N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, video_sizes, endpoints, requests)
+
+    print("Caches content after local search:")
+    for i, cache in enumerate(caches):
+        print(f"Cache {i}: {cache}")
+
+    deep_search_result = compute_cost(caches, endpoints, requests)
+    print(f"Total cost after local search: {deep_search_result}")
+    print(f"Number of recursive calls in local search: {cpt}")
+
 
 
 

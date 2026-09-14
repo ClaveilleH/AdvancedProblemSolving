@@ -39,7 +39,7 @@ def greedy_algorithm(N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes
                         caches[cache_id].remove(video_id)  # Remove the video if it doesn't improve the cost    
 
             
-def local_search(N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, video_sizes, endpoints, requests, interation = 10, prev_mod=None):
+def local_search(N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, video_sizes, endpoints, requests, interation = 100, prev_mod=None):
     # Placeholder for deep search algorithm
     # This function should implement a more exhaustive search to find a better solution
     """
@@ -71,7 +71,7 @@ def local_search(N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, vi
 
     if best_voisin_cost < base_cost:
         # print(f"Found a better neighbor with cost {best_voisin_cost}")
-        return local_search(N_vid, N_endpoint, N_request, N_cache, best_voisin[0], best_voisin[1], video_sizes, endpoints, requests, interation=interation-1)
+        return local_search(N_vid, N_endpoint, N_request, N_cache, best_voisin[0], best_voisin[1], video_sizes, endpoints, requests)
     
     return best_voisin
 
@@ -118,6 +118,22 @@ def main(args):
     caches_sizes = [cache_size] * N_cache  # la taille restante de chaque cache
 
     base = N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, video_sizes, endpoints, requests
+    # on deepcopy la base pour ne pas modifier les données originales lors de l'algorithme glouton
+
+    base = copy.deepcopy(base)
+
+    # =================================================
+    greedy_algorithm(N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, video_sizes, endpoints, requests)
+
+    print("Caches content:")
+    for i, cache in enumerate(caches):
+        print(f"Cache {i}: {cache}")
+
+    print("Cost computation:")
+    greedyResult = compute_cost(caches, endpoints, requests)
+    print(f"Total cost after greedy algorithm: {greedyResult}")
+
+    # =================================================
     N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, video_sizes, endpoints, requests = base
 
     caches, caches_sizes = local_search(N_vid, N_endpoint, N_request, N_cache, caches, caches_sizes, video_sizes, endpoints, requests)
