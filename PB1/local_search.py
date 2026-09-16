@@ -14,7 +14,7 @@ def calculate_video_latency(adj_list,caches,vid_id,N__vid,N_endpoint,N_requests,
 
 
 
-def local_search(adj_list,N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, caches, endpointData, requests, iteration=10, nbCaches=None, nbVideos=None):
+def tabu_search(iter_step,nb_forbiden_moves,forbiden_moves,adj_list,N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, caches, endpointData, requests, iteration=10, nbCaches=None, nbVideos=None):
     if iteration == 0:
         return caches, caches_sizes
     if nbCaches is None or nbCaches > N_caches:
@@ -31,7 +31,7 @@ def local_search(adj_list,N_vid, N_endpoint, N_requests, N_caches, caches_sizes,
         cache = caches[cache_id]
         for videoId in random.sample(range(N_vid), nbVideos):
            # print(f"Checking video {videoId} for cache {cache_id}")
-            if videoId in cache:
+            if videoId in cache or (cache_id, videoId) in forbiden_moves:
                 continue
             if videoSizes[videoId] <= caches_sizes[cache_id]:
                 current_video_cost = calculate_video_latency(adj_list, caches, videoId, N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, endpointData, requests)
@@ -44,7 +44,8 @@ def local_search(adj_list,N_vid, N_endpoint, N_requests, N_caches, caches_sizes,
                     best_move = (cache_id, videoId)
     caches[best_move[0]].add(best_move[1])
     caches_sizes[best_move[0]] -= videoSizes[best_move[1]]
+    forbiden_moves[iter_step % nb_forbiden_moves] = best_move
 
     
-    return local_search(adj_list,N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, caches, endpointData, requests, iteration-1, nbCaches, nbVideos)
+    return tabu_search(iter_step + 1, nb_forbiden_moves, forbiden_moves, adj_list,N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, caches, endpointData, requests, iteration-1, nbCaches, nbVideos)
                 
