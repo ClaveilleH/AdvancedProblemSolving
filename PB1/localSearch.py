@@ -43,7 +43,7 @@ def greedy(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, ca
             caches_sizes[fastestCache] -= videoSizes[vidId]
     return caches
 
-def local_search(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, caches, endpointData, requests, iteration=10, previous_moves=None, nbCaches=None, nbVideos=None):
+def local_search(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, caches, endpointData, requests, iteration=10, previous_moves=None, nbCaches=None, nbVideos=None, supp = False):
     if iteration == 0:
         return caches, caches_sizes
     if nbCaches is None or nbCaches > N_caches:
@@ -71,7 +71,7 @@ def local_search(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSiz
                 neighbors.append((video, cost, caches, caches_sizes, move))
 
     # suppression
-    if True:  # Disable removal for now
+    if supp:
         for cache_id in range(nbCaches):
             cache = caches[cache_id]
             for video in cache[:nbVideos]:  # Only consider the first nbVideos videos in the cache for removal
@@ -83,7 +83,7 @@ def local_search(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSiz
 
     neighbors.sort(key=lambda x: x[1])
     if neighbors is None or len(neighbors) == 0:
-        print("No neighbors found, returning current state")
+        print(f"No neighbors found at iteration {iteration}, returning current state : {neighbors}")
         return caches, caches_sizes
     best_neighbor = neighbors[0] if neighbors else (float('inf'), caches, caches_sizes, None)
     # print(f"Best neighbor: {best_neighbor} with cost {best_neighbor[1]}")
@@ -185,7 +185,9 @@ def main(args):
     caches = [[] for _ in range(N_cache)]  # la liste des videos stockés dans chaque cache
     caches_sizes = [cache_size] * N_cache  # la taille restante de chaque cache
 
+    current_time = time.time()
     greedy(N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests)
+    print(f"Greedy time: {time.time() - current_time:.4f} seconds")
 
     if sum([len(cache) for cache in caches]) < 20:
         print("Caches content:")
@@ -193,27 +195,45 @@ def main(args):
             print(f"Cache {i}: {cache}")
 
 
+    current_time = time.time()
     greedyCost= compute_cost(caches, endpoints, requests)
-    print(f"Greedy : {greedyCost}")
+    print(f"[{time.time() - current_time:.4f}s] Greedy : {greedyCost}")
 
 
     current_time = time.time()
     video_sizes_sorted, videos_info = preprocess_data(N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests)
     video_sizes = video_sizes_sorted
     print(f"Preprocessing time: {time.time() - current_time:.4f} seconds")
+    
+    current_time = time.time()
+    local_search(N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration=10, previous_moves=None, nbCaches=50, nbVideos=100, supp=True)
+    print(f"Local search time: {time.time() - current_time:.4f} seconds")
+
+    localSearchCost = compute_cost(caches, endpoints, requests)
+    print(f"Local search : {localSearchCost}")
+    print(f"Improvement: {greedyCost - localSearchCost} ({(greedyCost - localSearchCost) / greedyCost * 100:.2f}%)")
+
+
+    return
+
     current_time = time.time()
     local_search(N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration=20, previous_moves=None, nbCaches=50, nbVideos=100)
     print(f"Local search time: {time.time() - current_time:.4f} seconds")
 
-    if sum([len(cache) for cache in caches]) < 20:  
-        print("Final caches content:")
-        for i, cache in enumerate(caches):
-            print(f"Cache {i}: {cache}")
+    localSearchCost2 = compute_cost(caches, endpoints, requests)
+    print(f"Local search : {localSearchCost2}")
+    print(f"Improvement: {localSearchCost - localSearchCost2} ({(greedyCost - localSearchCost2) / greedyCost * 100:.2f}%)")
 
-    localSearchCost = compute_cost(caches, endpoints, requests)
-    print(f"Local search : {localSearchCost}")
 
-    print(f"Improvement: {greedyCost - localSearchCost} ({(greedyCost - localSearchCost) / greedyCost * 100:.2f}%)")
+    current_time = time.time()
+    local_search(N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration=20, previous_moves=None, nbCaches=50, nbVideos=100, supp=True)
+    print(f"Local search with removal time: {time.time() - current_time:.4f} seconds")
+
+    localSearchCost3 = compute_cost(caches, endpoints, requests)
+    print(f"Local search with removal : {localSearchCost3}")
+    print(f"Improvement: {localSearchCost2 - localSearchCost3} ({(localSearchCost2 - localSearchCost3) / localSearchCost2 * 100:.2f}%)")
+
+
 
 
 
