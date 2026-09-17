@@ -1,4 +1,4 @@
-
+global adj_list
 def compute_cost(cache, endpoints, requests):
     # Placeholder for cost computation logic
     total_cost = 0
@@ -18,6 +18,19 @@ def compute_cost(cache, endpoints, requests):
     # print(f"Total cost: {total_cost}")
     return total_cost
 
+
+def calculate_video_latency(adj_list,caches,vid_id,N__vid,N_endpoint,N_requests,N_caches,caches_capa,VideoSizes,EndpointData,Requests):
+    total_cost=0
+    for i in adj_list[vid_id]:
+        video_id, endpoint_id, num_requests = Requests[i]
+        endpoint_latency, linked_caches = EndpointData[endpoint_id]
+        min_latency = endpoint_latency
+        for cache_id, cache_latency in linked_caches:
+            if video_id in caches[cache_id] and cache_latency < min_latency:
+                    min_latency = cache_latency
+        total_cost += num_requests * min_latency
+        
+    return total_cost
 
 
 
@@ -52,10 +65,11 @@ def local_search(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSiz
         nbVideos = N_vid
     if iteration == 0:
         return caches, caches_sizes
+    print(f"previous_moves={previous_moves}")
     # print(f"Testing local search iteration {iteration} with {nbCaches}/{N_caches} caches and {nbVideos}/{N_vid} videos")
     # base_cost = compute_cost(caches, endpointData, requests)
     neighbors = []  # (cost, caches, caches_sizes, move)
-
+    cost = compute_cost(caches, endpointData, requests)
     # ajouts
     for cache_id in range(nbCaches):
         cache = caches[cache_id]
@@ -64,26 +78,32 @@ def local_search(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSiz
             if video in cache:
                 continue
             if videoSizes[video] <= caches_sizes[caches.index(cache)]:
+                previous_cost = calculate_video_latency(adj_list, caches, video, N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, endpointData, requests)
                 caches[cache_id].append(video)
-                cost = compute_cost(caches, endpointData, requests)
+                new_cost = calculate_video_latency(adj_list, caches, video, N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, endpointData, requests)
+                delta = new_cost - previous_cost
+
                 caches[cache_id].remove(video)
                 move = (1, cache_id, video) # 1 for addition, 0 for removal
-                neighbors.append((video, cost, caches, caches_sizes, move))
+                neighbors.append((video, cost + delta, caches, caches_sizes, move))
 
     # suppression
     if supp:
         for cache_id in range(nbCaches):
             cache = caches[cache_id]
             for video in cache[:nbVideos]:  # Only consider the first nbVideos videos in the cache for removal
+                previous_cost = calculate_video_latency(adj_list, caches, video, N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, endpointData, requests)
                 caches[cache_id].remove(video)
-                cost = compute_cost(caches, endpointData, requests)
+                new_cost = calculate_video_latency(adj_list, caches, video, N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, endpointData, requests)
+                delta = new_cost - previous_cost
+                # cost = compute_cost(caches, endpointData, requests)
                 caches[cache_id].append(video)
                 move = (0, cache_id, video) # 1 for addition, 0 for removal
-                neighbors.append((video, cost, caches, caches_sizes, move))
+                neighbors.append((video, cost + delta, caches, caches_sizes, move))
 
     neighbors.sort(key=lambda x: x[1])
     if neighbors is None or len(neighbors) == 0:
-        print(f"No neighbors found at iteration {iteration}, returning current state : {neighbors}")
+        print(f"No neighbors found at iteration {iteration}, current state: previous_moves={previous_moves}, nVideos={nbVideos}, nCaches={nbCaches}, supp={supp}")
         return caches, caches_sizes
     best_neighbor = neighbors[0] if neighbors else (float('inf'), caches, caches_sizes, None)
     # print(f"Best neighbor: {best_neighbor} with cost {best_neighbor[1]}")
@@ -98,7 +118,7 @@ def local_search(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSiz
     caches_sizes[best_neighbor[4][0]] -= videoSizes[best_neighbor[4][1]]
     
 
-    return local_search(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, caches, endpointData, requests, iteration-1, best_neighbor[3], nbCaches, nbVideos)
+    return local_search(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, caches, endpointData, requests, iteration-1, best_neighbor[4], nbCaches, nbVideos, supp)
                 
 
     # for videos 
@@ -123,6 +143,14 @@ def preprocess_data(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, video
     video_sizes_sorted = [video[1] for video in videos_info]
     return video_sizes_sorted, videos_info
 
+
+def make_adj_list(N_vid,N_endpoint,N_requests,N_caches,caches_capa,VideoSizes,EndpointData,Requests):
+    """return a list of list where res[i]coresponds to the list of index of the requests that asked for video i """
+    res=[[] for _ in range(N_vid)]
+    for j in range(N_requests):
+        vid_id,_,_=Requests[j]
+        res[vid_id].append(j)
+    return res
 
 
 def read_input_file(input_file):
@@ -180,10 +208,14 @@ def main(args):
         return
 
     input_file = args[0]
-
     N_vid, N_endpoint, N_request, N_cache, cache_size, video_sizes, endpoints, requests = read_input_file(input_file)
     caches = [[] for _ in range(N_cache)]  # la liste des videos stockés dans chaque cache
     caches_sizes = [cache_size] * N_cache  # la taille restante de chaque cache
+    
+    current_time = time.time()
+    global adj_list
+    adj_list = make_adj_list(N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, endpoints, requests)
+    print(f"Made adjacency list in {time.time() - current_time:.4f} seconds")
 
     current_time = time.time()
     greedy(N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests)
