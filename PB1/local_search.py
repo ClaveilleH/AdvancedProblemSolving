@@ -2,7 +2,7 @@ import random
 from utils import calculate_video_latency, compute_cost
 #! ATTENTION : supprimer l'utilisation de compute_cost dans local_search
 
-def tabu_search(iter_step,nb_forbiden_moves,forbiden_moves,adj_list,N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, caches, endpointData, requests, iteration=10, nbCaches=None, nbVideos=None):
+def tabu_search(nb_forbiden_moves,forbiden_moves,adj_list,N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, caches, endpointData, requests, iteration=10, nbCaches=None, nbVideos=None, iter_step=0):
     if iteration == 0:
         return caches, caches_sizes
     if nbCaches is None or nbCaches > N_caches:
@@ -35,7 +35,7 @@ def tabu_search(iter_step,nb_forbiden_moves,forbiden_moves,adj_list,N_vid, N_end
     forbiden_moves[iter_step % nb_forbiden_moves] = best_move
 
     
-    return tabu_search(iter_step + 1, nb_forbiden_moves, forbiden_moves, adj_list,N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, caches, endpointData, requests, iteration-1, nbCaches, nbVideos)
+    return tabu_search(nb_forbiden_moves, forbiden_moves, adj_list,N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, caches, endpointData, requests, iteration-1, nbCaches, nbVideos, iter_step + 1)
                 
 
 def local_search(N_vid, N_endpoint, N_requests, N_caches, adj_list, videoSizes, caches_sizes, caches, endpointData, requests, iteration=10, previous_moves=None, nbCaches=None, nbVideos=None, supp = False):

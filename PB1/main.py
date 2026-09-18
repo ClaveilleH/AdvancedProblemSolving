@@ -86,17 +86,30 @@ def main(args):
 
     #! ######## Test tabu search algorithm
     from local_search import tabu_search
-    iteration=1000
+    iteration=10
     nbCaches=10
     nbVideos=10
     nb_forbiden_moves=10
     forbiden_moves = [None] * nb_forbiden_moves
     caches = [set(cache) for cache in caches_after_greedy]
     caches_sizes = deepcopy(caches_sizes_after_greedy)
-    tabu_search(iteration,nb_forbiden_moves,forbiden_moves,adj_list,N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration , nbCaches, nbVideos)
+    tabu_search(nb_forbiden_moves,forbiden_moves,adj_list,N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration , nbCaches, nbVideos)
     results["TS (Greedy)"] = compute_cost(caches, endpoints, requests)
     print(f"[{time_taken:.4f}s] Tabu Search (Greedy) : {results['TS (Greedy)']} ({(base_cost - results['TS (Greedy)']) / base_cost * 100:.2f}%)")
 
+    #! ######## Test tabu search algorithm with greedy2
+    iteration=10
+    nbCaches=10
+    nbVideos=10
+    nb_forbiden_moves=10
+    forbiden_moves = [None] * nb_forbiden_moves
+    caches = [set(cache) for cache in caches_after_greedy2]
+    caches_sizes = deepcopy(caches_sizes_after_greedy2)
+    tabu_search(nb_forbiden_moves,forbiden_moves,adj_list,N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration , nbCaches, nbVideos)
+    results["TS (Greedy2)"] = compute_cost(caches, endpoints, requests)
+    print(f"[{time_taken:.4f}s] Tabu Search (Greedy2) : {results['TS (Greedy2)']} ({(base_cost - results['TS (Greedy2)']) / base_cost * 100:.2f}%)")
+
+    
 
     print_comparison_table(results)
     best_method = min(results, key=results.get)
