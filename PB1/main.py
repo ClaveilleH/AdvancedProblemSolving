@@ -81,13 +81,13 @@ def main(args):
 
     cost= compute_cost(caches, endpoints, requests)
     print("local search")
-    iteration=500
+    iteration=1000
     nbCaches=10
     nbVideos=10
     nb_forbiden_moves=10
     forbiden_moves = [None] * nb_forbiden_moves
 
-    caches, caches_sizes = tabu_search(0,nb_forbiden_moves,forbiden_moves,adj_list,N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration , nbCaches, nbVideos)
+    caches = tabu_search(nb_forbiden_moves,forbiden_moves,adj_list,N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration , nbCaches, nbVideos)
 
    
     print("score after local search:")
