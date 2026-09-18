@@ -14,7 +14,7 @@ def compute_cost(cache, endpoints, requests):
         
         total_cost += num_requests * min_latency
 
-    print(f"Total cost: {total_cost}")
+    # print(f"Total cost: {total_cost}")
     return total_cost
 
 
@@ -24,7 +24,7 @@ def make_adj_list(N_vid, N_requests, requests):
     the requests that asked for video i 
     """
     res = [[] for _ in range(N_vid)]
-    
+
     for j in range(N_requests):
         vid_id, _, _ = requests[j]
         res[vid_id].append(j)
@@ -97,3 +97,17 @@ def print_comparison_table(results):
         row = f"{name_i:<{col_width}}|" + "|".join(f"{cell(i, j):^{col_width}}" for j in range(n))
         print(row)
     print(sep)
+
+
+def calculate_video_latency(adj_list,caches,vid_id,N__vid,N_endpoint,N_requests,N_caches,caches_capa,VideoSizes,EndpointData,Requests):
+    total_cost=0
+    for i in adj_list[vid_id]:
+        video_id, endpoint_id, num_requests = Requests[i]
+        endpoint_latency, linked_caches = EndpointData[endpoint_id]
+        min_latency = endpoint_latency
+        for cache_id, cache_latency in linked_caches:
+            if video_id in caches[cache_id] and cache_latency < min_latency:
+                    min_latency = cache_latency
+        total_cost += num_requests * min_latency
+        
+    return total_cost

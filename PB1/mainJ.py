@@ -13,16 +13,20 @@ def main(args):
     input_file = args[0]
 
     N_vid, N_endpoint, N_request, N_cache, cache_size, video_sizes, endpoints, requests = read_input_file(input_file)
-    adj_list = make_adj_list(N_vid,N_endpoint,N_request,N_cache,cache_size,video_sizes,endpoints,requests)
+    # adj_list = make_adj_list(N_vid,N_endpoint,N_request,N_cache,cache_size,video_sizes,endpoints,requests)
+    adj_list = make_adj_list(N_vid, N_request, requests)
     caches_sizes=[cache_size]*N_cache
     print("greedy")
-    caches=greedy(caches_sizes,N_vid,N_endpoint,N_request,N_cache,cache_size,video_sizes,endpoints,requests)
+    # caches=greedy(caches_sizes,N_vid,N_endpoint,N_request,N_cache,cache_size,video_sizes,endpoints,requests)
+    caches=greedy(N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, endpoints, requests, [[] for _ in range(N_cache)])
   
     
     print("score:")
 
     cost= compute_cost(caches, endpoints, requests)
     print("local search")
+
+    
     iteration=1000
     nbCaches=10
     nbVideos=10

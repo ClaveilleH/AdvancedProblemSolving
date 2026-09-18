@@ -45,7 +45,8 @@ def preprocess_requests(N_vid, N_endpoint, N_requests, N_caches, requests, endpo
         video_request_count[video_id] += num_requests
         video_endpoint[video_id].append(endpoint_id)
 
-    print(f"Nombre de videos non utilisées : {N_vid - len(videos_list)}")
+    # print(f"Nombre de videos non utilisées : {N_vid - len(videos_list)}")
+    
 
     # videos_caches = [{} for _ in range(N_vid)]
     videos_caches = [[] for _ in range(N_vid)]
@@ -69,10 +70,10 @@ def preprocess_requests(N_vid, N_endpoint, N_requests, N_caches, requests, endpo
         videos_caches[video_id].sort(key=lambda x: x[1], reverse=True)  # Sort by number of requests descending
 
     # print(videos_caches[1])
-    print(f"Nombre de caches non utilisés : {N_caches - len(caches_list)}")
+    # print(f"Nombre de caches non utilisés : {N_caches - len(caches_list)}")
 
     video_list_sorted = sorted(list(videos_list), key=lambda x: video_request_count[x], reverse=True)
-
+    print(f"---> {N_vid - len(video_list_sorted)} videos unused, {N_caches - len(caches_list)} caches unlinked")
     return video_list_sorted, videos_caches, caches_list
 
 
@@ -80,7 +81,7 @@ def preprocess_requests(N_vid, N_endpoint, N_requests, N_caches, requests, endpo
 
 
 
-def greedy2(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, caches, endpointData, requests):
+def greedy2(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, endpointData, requests, caches):
     """
     Idée : on tr
     """

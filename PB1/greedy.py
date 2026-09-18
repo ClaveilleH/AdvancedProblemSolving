@@ -1,10 +1,5 @@
-import random
-
-
-
-
-
-def greedy(caches_sizes, N_vid, N_endpoint, N_requests, N_caches, caches_capa, videoSizes, endpointData, requests):
+#    greedy(N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, endpoints, requests, caches)
+def greedy(N_vid, N_endpoint, N_requests, N_caches, caches_sizes, videoSizes, endpointData, requests, caches):
     # tri des requêtes par nombre de requêtes décroissant
     sorted_requests = sorted(requests,key=lambda x: x[2],reverse=True)
     res=[set() for _ in range(N_caches)]
@@ -25,5 +20,10 @@ def greedy(caches_sizes, N_vid, N_endpoint, N_requests, N_caches, caches_capa, v
         if fastest_cache != None and vid_id not in res[fastest_cache]:
             res[fastest_cache].add(vid_id)
             caches_sizes[fastest_cache] -= videoSizes[vid_id]
-            
+
+    #modifie la liste pour que ca soit compatible avec le reste du code
+    # caches = [list(res[i]) for i in range(N_caches)] 
+    for i in range(N_caches):
+        caches[i] = list(res[i])
+
     return res
