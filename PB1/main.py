@@ -1,33 +1,7 @@
 from greedy import greedy
-from local_search import tabu_search
+from local_search import tabu_search, make_adj_list, compute_cost
 
 
-def compute_cost(cache, endpoints, requests):
-    total_cost = 0
-    for request in requests:
-        video_id, endpoint_id, num_requests = request
-        endpoint_latency, linked_caches = endpoints[endpoint_id]
-
-        min_latency = endpoint_latency
-        for cache_id, cache_latency in linked_caches:
-            if video_id in cache[cache_id]:
-                if cache_latency < min_latency:
-                    min_latency = cache_latency
-                # print(f"Cache {cache_id} with latency {cache_latency}")
-        
-        total_cost += num_requests * min_latency
-
-    print(f"Total cost: {total_cost}")
-    return total_cost
-
-
-def make_adj_list(N_vid,N_endpoint,N_requests,N_caches,caches_capa,VideoSizes,EndpointData,Requests):
-    """return a list of list where res[i]coresponds to the list of index of the requests that asked for video i """
-    res=[[] for _ in range(N_vid)]
-    for j in range(N_requests):
-        vid_id,_,_=Requests[j]
-        res[vid_id].append(j)
-    return res
 
 
 
@@ -76,22 +50,29 @@ def main(args):
     print("greedy")
     caches=greedy(caches_sizes,N_vid,N_endpoint,N_request,N_cache,cache_size,video_sizes,endpoints,requests)
   
-    
     print("score:")
 
     cost= compute_cost(caches, endpoints, requests)
-    print("local search")
-    iteration=1000
-    nbCaches=10
-    nbVideos=10
+    print(cost)
+    print("local search from greedy solution")
+    iteration=100000
+    nbCaches=1000000
+    nbVideos=1000000
     nb_forbiden_moves=10
-    forbiden_moves = [None] * nb_forbiden_moves
 
-    caches = tabu_search(nb_forbiden_moves,forbiden_moves,adj_list,N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration , nbCaches, nbVideos)
+    caches = tabu_search(nb_forbiden_moves,adj_list,N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration , nbCaches, nbVideos)
 
    
-    print("score after local search:")
+    print("score :")
     cost= compute_cost(caches, endpoints, requests)
+    print(cost)
+    
+    caches= [set() for cache in caches]  
+    print("local search from empty solution")
+    caches=tabu_search(nb_forbiden_moves,adj_list,N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration , nbCaches, nbVideos)
+    score= compute_cost(caches, endpoints, requests)
+    print("score :")
+    print(score)
         
 
 
