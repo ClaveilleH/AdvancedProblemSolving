@@ -99,11 +99,11 @@ def print_comparison_table(results):
     print(sep)
 
 
-def calculate_video_latency(adj_list,caches,vid_id,N__vid,N_endpoint,N_requests,N_caches,caches_capa,VideoSizes,EndpointData,Requests):
+def calculate_video_latency(adj_list,caches,vid_id,N__vid,N_endpoint,N_requests,N_caches,caches_capa,videoSizes,endpointData,requests):
     total_cost=0
     for i in adj_list[vid_id]:
-        video_id, endpoint_id, num_requests = Requests[i]
-        endpoint_latency, linked_caches = EndpointData[endpoint_id]
+        video_id, endpoint_id, num_requests = requests[i]
+        endpoint_latency, linked_caches = endpointData[endpoint_id]
         min_latency = endpoint_latency
         for cache_id, cache_latency in linked_caches:
             if video_id in caches[cache_id] and cache_latency < min_latency:
