@@ -56,7 +56,7 @@ def main(args):
 
     caches_after_greedy2 = deepcopy(caches)
     caches_sizes_after_greedy2 = deepcopy(caches_sizes)
-
+    empty_caches = [[] for _ in range(N_cache)]  
     #! ######## Test local search algorithm
     from local_search import preprocess_data
     current_time = time.time()
@@ -67,13 +67,26 @@ def main(args):
     # print(f"Preprocessing: {time.time() - current_time:.4f}s")
 
     from local_search import local_search
+
+
+  
+
+
     current_time = time.time()
-    local_search(N_vid, N_endpoint, N_request, N_cache, adj_list, video_sizes, caches_sizes, caches, endpoints, requests, iteration=10, previous_moves=None, nbCaches=10, nbVideos=10, supp=True)
+    local_search(N_vid, N_endpoint, N_request, N_cache, adj_list, video_sizes, caches_sizes, caches, endpoints, requests, iteration=500, previous_moves=None, nbCaches=10, nbVideos=10, supp=True)
     time_taken = time.time() - current_time
     results["LS (greedy)"] = compute_cost(caches, endpoints, requests)
     print(f"[{time_taken:.4f}s] Local Search (Greedy) : {results['LS (greedy)']} ({(base_cost - results['LS (greedy)']) / base_cost * 100:.2f}%)")
 
+    caches=deepcopy(empty_caches)
+    caches_sizes = [cache_size] * N_cache
+
+    local_search(N_vid, N_endpoint, N_request, N_cache, adj_list, video_sizes, caches_sizes, caches, endpoints, requests, iteration=500, previous_moves=None, nbCaches=100, nbVideos=10, supp=True)   
+    results["LS (Empty)"] = compute_cost(caches, endpoints, requests)
+    print(f"[{time_taken:.4f}s] Local Search (Empty) : {results['LS (Empty)']} ({(base_cost - results['LS (Empty)']) / base_cost * 100:.2f}%)")
     #! ######## Test local search algorithm with greedy2
+
+
     current_time = time.time()
     caches = deepcopy(caches_after_greedy2)
     caches_sizes = deepcopy(caches_sizes_after_greedy2)
@@ -86,10 +99,19 @@ def main(args):
 
     #! ######## Test tabu search algorithm
     from local_search import random_tabu_search
-    iteration=10
+    iteration=500
     nbCaches=10
     nbVideos=10
     nb_forbiden_moves=0
+    empty_caches = [set() for _ in range(N_cache)]  
+
+    caches= deepcopy(empty_caches)
+    caches_sizes = [cache_size] * N_cache
+    random_tabu_search(nb_forbiden_moves,adj_list,N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration , nbCaches, nbVideos)
+    results["TS (Empty)"] = compute_cost(caches, endpoints, requests)
+    print(f"[{time_taken:.4f}s] Tabu Search (Empty) : {results['TS (Empty)']} ({(base_cost - results['TS (Empty)']) / base_cost * 100:.2f}%)")
+
+
     caches = [set(cache) for cache in caches_after_greedy]
     caches_sizes = deepcopy(caches_sizes_after_greedy)
     random_tabu_search(nb_forbiden_moves,adj_list,N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration , nbCaches, nbVideos)
@@ -105,7 +127,15 @@ def main(args):
     print(f"[{time_taken:.4f}s] Tabu Search (Greedy2) : {results['TS (Greedy2)']} ({(base_cost - results['TS (Greedy2)']) / base_cost * 100:.2f}%)")
 
     from local_search import sorted_tabu_search
-    
+    caches= deepcopy(empty_caches)
+    caches_sizes = [cache_size] * N_cache
+    sorted_tabu_search(nb_forbiden_moves,adj_list,N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration , nbCaches, nbVideos)
+    results["TSsort (Empty)"] = compute_cost(caches, endpoints, requests)
+    print(f"[{time_taken:.4f}s] sorted Tabu Search (Empty) : {results['TS (Empty)']} ({(base_cost - results['TS (Empty)']) / base_cost * 100:.2f}%)")
+
+
+
+
     caches = [set(cache) for cache in caches_after_greedy]
     caches_sizes = deepcopy(caches_sizes_after_greedy)
     sorted_tabu_search(nb_forbiden_moves,adj_list,N_vid, N_endpoint, N_request, N_cache, caches_sizes, video_sizes, caches, endpoints, requests, iteration , nbCaches, nbVideos)
@@ -129,6 +159,6 @@ def main(args):
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
-        main(["instances/test.in"])  # Default input file for testing
+        main(["instances/me_at_the_zoo.in"])  # Default input file for testing
     else:
         main(sys.argv[1:])
